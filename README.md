@@ -128,7 +128,7 @@ Sets up VS Code Server with Caddy reverse proxy and HTTPS.
 
 ## Server Configuration
 
-### `ufw-ssh-configs.sh`
+### `initial-ufw-ssh.sh`
 
 Configures SSH and UFW firewall for enhanced server security.
 
@@ -144,7 +144,7 @@ Configures SSH and UFW firewall for enhanced server security.
 
 **Usage:**
 ```bash
-sudo ./ufw-ssh-configs.sh
+sudo ./initial-ufw-ssh.sh
 ```
 
 **⚠️ Warning:** Ensure you have SSH key access configured before running this script.

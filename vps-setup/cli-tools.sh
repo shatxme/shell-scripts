@@ -2,12 +2,40 @@
 set -euo pipefail
 
 TOOLS_NOTE="ripgrep fd fzf jq yq bat zoxide delta"
+OS_TYPE=""
+PKG_MANAGER=""
 
 log() { printf '[install-cli] %s\n' "$*"; }
 die() { printf '[install-cli] ERROR: %s\n' "$*" >&2; exit 1; }
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
+}
+
+detect_env() {
+  case "$(uname -s)" in
+    Linux) OS_TYPE="linux" ;;
+    Darwin) OS_TYPE="macos" ;;
+    *) die "Unsupported OS. This script supports Linux and macOS only." ;;
+  esac
+
+  if [ "$OS_TYPE" = "macos" ]; then
+    command -v brew >/dev/null 2>&1 || die "Homebrew is required on macOS. Install it from https://brew.sh"
+    PKG_MANAGER="brew"
+    return 0
+  fi
+
+  if command -v apt-get >/dev/null 2>&1; then
+    PKG_MANAGER="apt"
+  elif command -v pacman >/dev/null 2>&1; then
+    PKG_MANAGER="pacman"
+  elif command -v dnf >/dev/null 2>&1; then
+    PKG_MANAGER="dnf"
+  elif command -v brew >/dev/null 2>&1; then
+    PKG_MANAGER="brew"
+  else
+    die "Unsupported Linux package manager. Supported: apt, pacman, dnf, brew"
+  fi
 }
 
 install_apt() {
@@ -44,17 +72,16 @@ install_dnf() {
   sudo dnf install -y ripgrep fd-find fzf jq yq bat zoxide git-delta
 }
 
-if command -v apt-get >/dev/null 2>&1; then
-  install_apt
-elif command -v brew >/dev/null 2>&1; then
-  install_brew
-elif command -v pacman >/dev/null 2>&1; then
-  install_pacman
-elif command -v dnf >/dev/null 2>&1; then
-  install_dnf
-else
-  die "Unsupported package manager. Supported: apt, brew, pacman, dnf"
-fi
+detect_env
+log "Detected environment: $OS_TYPE ($PKG_MANAGER)"
+
+case "$PKG_MANAGER" in
+  apt) install_apt ;;
+  brew) install_brew ;;
+  pacman) install_pacman ;;
+  dnf) install_dnf ;;
+  *) die "Unsupported package manager: $PKG_MANAGER" ;;
+esac
 
 log "Verifying installs..."
 for t in rg fd fzf jq yq bat zoxide delta; do
